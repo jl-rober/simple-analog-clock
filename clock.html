@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            .clock {
+                border-radius: 50%;
+                background: #fff url(https://upload.wikimedia.org/wikipedia/commons/d/db/Custom-watch-clock-face-dial-template-base.svg) no-repeat center;
+                background-size: 88%;
+                height: 20em;
+                position: relative;
+                width: 20em;
+                margin: 0 auto;
+            }
+
+            .hours {
+                width: 2%;
+                background-color: #000;
+                height: 20%;
+                position: absolute;
+                left: 49%;
+                top: 30%;
+                transform-origin: center 100%;
+            }
+
+            .minutes {
+                width: 1.5%;
+                background-color: #000;
+                height: 30%;
+                position: absolute;
+                left: 49.25%;
+                top: 20%;
+                transform-origin: center 100%;
+                transition: transform 0.3s cubic-bezier(.4,2.08,.55,.44);
+            }
+
+            .seconds {
+                width: 1%;
+                background: #000;
+                height: 42%;
+                position: absolute;
+                left: 49.5%;
+                top: 12.2%;
+                transform-origin: center 90%;
+                transition: transform 0.2s cubic-bezier(.4,2.08,.55,.44);
+            }
+        </style>
+        <title>Simple Analog Clock</title>
+    </head>
+    <body>
+        <div class="clock">
+            <div class="hours"></div>
+            <div class="minutes"></div>
+            <div class="seconds"></div>
+        </div>
+        <script>
+            const degreesPerSecondMinute = 6;
+            const degreesPerHour = 30;
+
+            function getTime() {
+                let date = new Date();
+
+                return {
+                    hours: date.getHours(),
+                    minutes: date.getMinutes(),
+                    seconds: date.getSeconds()
+                };
+            }
+
+            function getHandReferences() {
+                return {
+                    hours: document.querySelector('.hours'),
+                    minutes: document.querySelector('.minutes'),
+                    seconds: document.querySelector('.seconds')
+                };
+            }
+
+            function setInitialTime(time, references) {
+                setRotation(references.seconds, time.seconds * degreesPerSecondMinute);
+                setRotation(references.minutes, time.minutes * degreesPerSecondMinute);
+                setRotation(references.hours, (time.hours * degreesPerHour) + (30 * (time.minutes / 60)));
+            }
+
+            function updateTime(references) {
+                setInterval(() => {
+                    incrementRotation(references.hours, 0.05);
+                }, 6000);
+
+                return setInterval(() => {
+                    let updatedSecondsRotation = incrementRotation(references.seconds, 6);
+
+                    if(updatedSecondsRotation >= 360) {
+
+                        incrementRotation(references.minutes, 6);
+
+                        setTimeout(() => {
+                            references.seconds.style.transition = 'none';
+                            setRotation(references.seconds, updatedSecondsRotation - 360);
+                            setTimeout(() => {
+                                references.seconds.style.transition = 'transform 0.2s cubic-bezier(.4,2.08,.55,.44)';
+                            }, 1);
+                        }, 600);
+
+                    }
+                }, 1000);
+            }
+
+            /*
+            Helper Functions
+             */
+
+            function getCurrentRotation(reference) {
+                let currentRotation = reference.style.transform;
+                currentRotation = currentRotation.substring(currentRotation.indexOf('(') + 1, currentRotation.indexOf('deg)'));
+
+                return parseFloat(currentRotation);
+            }
+
+            function setRotation(reference, rotation) {
+                reference.style.transform = 'rotateZ(' + rotation + 'deg)';
+            }
+
+            function incrementRotation(reference, amount) {
+                let currentRotation = getCurrentRotation(reference);
+                setRotation(reference, currentRotation += amount);
+                return currentRotation;
+            }
+
+            !function start() {
+                const time = getTime(),
+                      references = getHandReferences();
+
+                setInitialTime(time, references);
+                let updater = updateTime(references);
+            }();
+        </script>
+    </body>
+</html>
