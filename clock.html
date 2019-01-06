@@ -55,6 +55,8 @@
         <script>
             const degreesPerSecondMinute = 6;
             const degreesPerHour = 30;
+            const secondsPerMinute = 60;
+            const millisecondsPerSecond = 1000;
 
             function getTime() {
                 let date = new Date();
@@ -80,28 +82,30 @@
                 setRotation(references.hours, (time.hours * degreesPerHour) + (30 * (time.minutes / 60)));
             }
 
-            function updateTime(references) {
-                setInterval(() => {
-                    incrementRotation(references.hours, 0.05);
-                }, 6000);
+            function tickTock(references) {
+                setTimeout(() => {
+                    let time = getTime();
 
-                return setInterval(() => {
-                    let updatedSecondsRotation = incrementRotation(references.seconds, 6);
-
-                    if(updatedSecondsRotation >= 360) {
-
-                        incrementRotation(references.minutes, 6);
-
+                    if((getCurrentRotation(references.seconds) - (time.seconds * degreesPerSecondMinute)) > 12) {
+                        setRotation(references.seconds, getCurrentRotation(references.seconds) + 6);
                         setTimeout(() => {
+                            let transition = references.seconds.style.transition;
                             references.seconds.style.transition = 'none';
-                            setRotation(references.seconds, updatedSecondsRotation - 360);
+                            setRotation(references.seconds, time.seconds * degreesPerSecondMinute);
                             setTimeout(() => {
-                                references.seconds.style.transition = 'transform 0.2s cubic-bezier(.4,2.08,.55,.44)';
-                            }, 1);
-                        }, 600);
-
+                                references.seconds.style.transition = transition;
+                            }, 200);
+                        }, 500)
+                    } else {
+                        setRotation(references.seconds, time.seconds * degreesPerSecondMinute);
                     }
-                }, 1000);
+
+                    setRotation(references.minutes, time.minutes * degreesPerSecondMinute);
+
+                    let incrementHours = (time.hours * degreesPerHour) + ((time.minutes / secondsPerMinute) * degreesPerHour);
+                    setRotation(references.hours, incrementHours);
+                    tickTock(references);
+                }, millisecondsPerSecond);
             }
 
             /*
@@ -119,18 +123,12 @@
                 reference.style.transform = 'rotateZ(' + rotation + 'deg)';
             }
 
-            function incrementRotation(reference, amount) {
-                let currentRotation = getCurrentRotation(reference);
-                setRotation(reference, currentRotation += amount);
-                return currentRotation;
-            }
-
             !function start() {
                 const time = getTime(),
                       references = getHandReferences();
 
                 setInitialTime(time, references);
-                let updater = updateTime(references);
+                tickTock(references);
             }();
         </script>
     </body>
